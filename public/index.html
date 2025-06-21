@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Search</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">🛍️ Product Search</h1>
+            <p class="subtitle">Find the best products across the web</p>
+        </header>
+
+        <div class="search-section">
+            <form id="searchForm" class="search-form">
+                <div class="search-input-group">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search for products (e.g., blue jeans, running shoes...)"
+                        required
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="search-btn">
+                        <span class="search-icon">🔍</span>
+                        Search
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="loadingIndicator" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Searching for products...</p>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <div id="resultsSection" class="results-section hidden">
+            <div class="results-header">
+                <h2 id="resultsTitle">Search Results</h2>
+                <p id="resultsCount"></p>
+            </div>
+            <div id="productsGrid" class="products-grid"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 
