@@ -8,6 +8,9 @@ const resultsTitle = document.getElementById('resultsTitle');
 const resultsCount = document.getElementById('resultsCount');
 const productsGrid = document.getElementById('productsGrid');
 
+// Global variable to store current products
+let currentProducts = [];
+
 // Search functionality
 searchForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -18,11 +21,11 @@ searchForm.addEventListener('submit', async (e) => {
     await performSearch(query);
 });
 
-// Perform search API call
+// Perform search API call with automatic better image selection
 async function performSearch(query) {
     try {
-        // Show loading state
-        showLoading();
+        // Show loading state with image selection message
+        showLoading(true);
         hideError();
         hideResults();
         
@@ -44,7 +47,8 @@ async function performSearch(query) {
         hideLoading();
         
         if (data.products && data.products.length > 0) {
-            displayResults(data.products, query);
+            currentProducts = data.products;
+            displayResults(currentProducts, query, data.improvedCount);
         } else {
             showError('No products found. Try a different search term.');
         }
@@ -55,10 +59,15 @@ async function performSearch(query) {
     }
 }
 
-// Display search results
-function displayResults(products, query) {
+// Functions removed - better image selection now happens automatically during search
+
+// Display search results with better image information
+function displayResults(products, query, improvedCount = 0) {
     resultsTitle.textContent = `Search Results for "${query}"`;
-    resultsCount.textContent = `Found ${products.length} products`;
+    
+    // Show improved image count information
+    const imageInfo = improvedCount > 0 ? ` (${improvedCount} better images found ✨)` : '';
+    resultsCount.textContent = `Found ${products.length} products${imageInfo}`;
     
     productsGrid.innerHTML = '';
     
@@ -76,6 +85,8 @@ function displayResults(products, query) {
     });
 }
 
+// Better image selection functionality removed - now happens automatically during search
+
 // Create product card HTML
 function createProductCard(product) {
     const card = document.createElement('div');
@@ -87,11 +98,15 @@ function createProductCard(product) {
     // Format offers text
     const offersText = product.offers ? `${product.offers} offers` : '';
     
+    // Use better image if available, otherwise use original
+    const imageUrl = product.betterImageUrl || product.imageUrl || '/placeholder-image.png';
+    const imageClass = product.imageImproved ? 'product-image improved-image' : 'product-image';
+    
     card.innerHTML = `
         <img 
-            src="${product.imageUrl || '/placeholder-image.png'}" 
+            src="${imageUrl}" 
             alt="${product.title}"
-            class="product-image"
+            class="${imageClass}"
             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjdGQUZDIi8+CjxwYXRoIGQ9Ik0xMDAgMTAwTDc1IDc1SDE1MEw3NSAxMDBMMTAwIDEyNUwxMjUgMTAwSDE1MEwxMjUgNzVMMTAwIDEwMFoiIGZpbGw9IiNFMkU4RjAiLz4KPHN2Zz4K'"
         >
         <div class="product-info">
@@ -106,6 +121,7 @@ function createProductCard(product) {
                 </div>
             ` : ''}
             ${offersText ? `<div class="product-offers">${offersText}</div>` : ''}
+            ${product.imageImproved ? `<div class="improvement-badge">✨ Better Image</div>` : ''}
         </div>
     `;
     
@@ -147,8 +163,26 @@ function generateStarRating(rating) {
     return stars + ` ${rating}`;
 }
 
+// Better image selection UI functions removed - now integrated into search
+
 // Utility functions
-function showLoading() {
+function showLoading(withImageSelection = false) {
+    if (withImageSelection) {
+        loadingIndicator.innerHTML = `
+            <div class="spinner"></div>
+            <div class="loading-text">
+                <p>Searching for products...</p>
+                <p class="loading-subtext">Finding better images ✨</p>
+            </div>
+        `;
+    } else {
+        loadingIndicator.innerHTML = `
+            <div class="spinner"></div>
+            <div class="loading-text">
+                <p>Searching for products...</p>
+            </div>
+        `;
+    }
     loadingIndicator.classList.remove('hidden');
 }
 
