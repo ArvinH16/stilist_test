@@ -21,11 +21,11 @@ searchForm.addEventListener('submit', async (e) => {
     await performSearch(query);
 });
 
-// Perform search API call with intelligent batch processing
-async function performSearch(query, targetQuality = 2, maxProducts = 6) {
+// Perform search API call
+async function performSearch(query) {
     try {
-        // Show loading state with intelligent processing message
-        showLoading(true);
+        // Show loading state
+        showLoading();
         hideError();
         hideResults();
         
@@ -36,11 +36,7 @@ async function performSearch(query, targetQuality = 2, maxProducts = 6) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                query,
-                targetQuality: parseInt(targetQuality),
-                maxProducts: parseInt(maxProducts)
-            })
+            body: JSON.stringify({ query })
         });
         
         if (!response.ok) {
@@ -57,7 +53,7 @@ async function performSearch(query, targetQuality = 2, maxProducts = 6) {
             currentProducts = data.products;
             displayResults(currentProducts, query, data, processingTime);
         } else {
-            showError('No products found. Try a different search term.');
+            showError(data.message || 'No products found. Try a different search term.');
         }
         
     } catch (error) {
@@ -66,30 +62,22 @@ async function performSearch(query, targetQuality = 2, maxProducts = 6) {
     }
 }
 
-// Display search results with intelligent processing information
+// Display search results
 function displayResults(products, query, searchData, processingTime) {
-    resultsTitle.textContent = `High-Quality Results for "${query}"`;
+    resultsTitle.textContent = `Amazon Results for "${query}"`;
     
-    // Enhanced result summary with quality filtering information
-    const qualityInfo = [];
-    qualityInfo.push(`${searchData.highQualityCount} high-quality products 🟢`);
-    
-    if (searchData.filteredOutCount > 0) {
-        qualityInfo.push(`${searchData.filteredOutCount} low-quality filtered out 🚫`);
-    }
-    
-    if (searchData.targetAchieved) {
-        qualityInfo.push(`quality target achieved 🎯`);
-    }
-    
-    const qualityText = ` (${qualityInfo.join(', ')})`;
-    const processingText = ` • Processed ${searchData.processedCount} products in ${processingTime}s`;
+    // Result summary
+    const totalProducts = searchData.totalProducts || products.length;
+    const source = searchData.source || 'Amazon';
     
     resultsCount.innerHTML = `
         <div class="results-summary">
-            <div class="results-main">Showing ${products.length} products${qualityText}</div>
+            <div class="results-main">
+                Showing ${products.length} products from ${source}
+                ${totalProducts > products.length ? ` (${totalProducts.toLocaleString()} total found)` : ''}
+            </div>
             <div class="results-meta">
-                Found ${searchData.processedCount}/${searchData.originalCount} products, showing only high-quality${processingText}
+                Search completed in ${processingTime}s
             </div>
         </div>
     `;
@@ -110,55 +98,35 @@ function displayResults(products, query, searchData, processingTime) {
     });
 }
 
-// Create product card HTML with quality indicators
+// Create product card HTML
 function createProductCard(product, index) {
     const card = document.createElement('div');
-    
-    // Dynamic card class based on quality
-    let cardClass = 'product-card';
-    if (product.qualityScore >= 50) {
-        cardClass += ' high-quality-card';
-    } else if (product.imageImproved) {
-        cardClass += ' improved-card';
-    }
-    
-    card.className = cardClass;
+    card.className = 'product-card';
     
     // Generate star rating
     const starRating = generateStarRating(product.rating);
     
-    // Format offers text
-    const offersText = product.offers ? `${product.offers} offers` : '';
+    // Format price display
+    const priceDisplay = formatPrice(product.price, product.originalPrice);
     
-    // Use better image if available, otherwise use original
-    const imageUrl = product.betterImageUrl || product.imageUrl || '/placeholder-image.png';
-    const imageClass = product.imageImproved ? 'product-image improved-image' : 'product-image';
-    
-    // Quality indicator
-    let qualityBadge = '';
-    if (product.qualityScore >= 50) {
-        qualityBadge = `<div class="quality-badge high-quality">🟢 High Quality (${product.qualityScore})</div>`;
-    } else if (product.imageImproved) {
-        qualityBadge = `<div class="quality-badge improved">🟡 Improved (${product.qualityScore})</div>`;
-    } else if (product.qualityScore > 0) {
-        qualityBadge = `<div class="quality-badge basic">🔴 Basic (${product.qualityScore})</div>`;
-    }
-    
-    // Ranking indicator
-    const rankingBadge = `<div class="ranking-badge">#${index}</div>`;
+    // Create badges
+    const badges = createBadges(product);
     
     card.innerHTML = `
-        ${rankingBadge}
+        <div class="ranking-badge">#${index}</div>
         <img 
-            src="${imageUrl}" 
-            alt="${product.title}"
-            class="${imageClass}"
+            src="${product.imageUrl || '/placeholder-image.png'}" 
+            alt="${escapeHtml(product.title)}"
+            class="product-image"
             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjdGQUZDIi8+CjxwYXRoIGQ9Ik0xMDAgMTAwTDc1IDc1SDE1MEw3NSAxMDBMMTAwIDEyNUwxMjUgMTAwSDE1MEwxMjUgNzVMMTAwIDEwMFoiIGZpbGw9IiNFMkU4RjAiLz4KPHN2Zz4K'"
         >
+        ${badges}
         <div class="product-info">
             <h3 class="product-title">${escapeHtml(product.title)}</h3>
             <div class="product-source">from ${escapeHtml(product.source)}</div>
-            <div class="product-price">${escapeHtml(product.price)}</div>
+            <div class="product-price-section">
+                ${priceDisplay}
+            </div>
             ${product.delivery ? `<div class="product-delivery">${escapeHtml(product.delivery)}</div>` : ''}
             ${product.rating ? `
                 <div class="product-rating">
@@ -166,12 +134,7 @@ function createProductCard(product, index) {
                     ${product.ratingCount ? `<span class="rating-count">(${product.ratingCount.toLocaleString()})</span>` : ''}
                 </div>
             ` : ''}
-            ${offersText ? `<div class="product-offers">${offersText}</div>` : ''}
-            ${qualityBadge}
-            ${product.qualityReasons && product.qualityReasons.length > 0 ? 
-                `<div class="quality-reasons" title="${product.qualityReasons.join(', ')}">${product.qualityReasons.slice(0, 2).join(', ')}${product.qualityReasons.length > 2 ? '...' : ''}</div>` 
-                : ''
-            }
+            ${product.salesVolume ? `<div class="product-sales">${escapeHtml(product.salesVolume)}</div>` : ''}
         </div>
     `;
     
@@ -213,53 +176,83 @@ function generateStarRating(rating) {
     return stars + ` ${rating}`;
 }
 
-// Utility functions
-function showLoading(withIntelligentProcessing = false) {
-    if (withIntelligentProcessing) {
-        loadingIndicator.innerHTML = `
-            <div class="spinner"></div>
-            <div class="loading-text">
-                <p>🤖 Intelligent Search in Progress...</p>
-                <p class="loading-subtext">Finding high-quality product images ✨</p>
-                <p class="loading-detail">Only showing products with professional-grade images</p>
-            </div>
-        `;
-    } else {
-        loadingIndicator.innerHTML = `
-            <div class="spinner"></div>
-            <div class="loading-text">
-                <p>Searching for products...</p>
-            </div>
-        `;
+// Format price display
+function formatPrice(price, originalPrice) {
+    let priceHtml = `<span class="current-price">${escapeHtml(price || 'Price not available')}</span>`;
+    
+    if (originalPrice && originalPrice !== price) {
+        priceHtml += ` <span class="original-price">${escapeHtml(originalPrice)}</span>`;
     }
-    loadingIndicator.classList.remove('hidden');
+    
+    return priceHtml;
 }
 
+// Create product badges
+function createBadges(product) {
+    const badges = [];
+    
+    if (product.isBestSeller) {
+        badges.push('<div class="badge badge-bestseller">Best Seller</div>');
+    }
+    
+    if (product.isAmazonChoice) {
+        badges.push('<div class="badge badge-choice">Amazon\'s Choice</div>');
+    }
+    
+    if (product.isPrime) {
+        badges.push('<div class="badge badge-prime">Prime</div>');
+    }
+    
+    if (product.badge) {
+        badges.push(`<div class="badge badge-special">${escapeHtml(product.badge)}</div>`);
+    }
+    
+    return badges.length > 0 ? `<div class="badges">${badges.join('')}</div>` : '';
+}
+
+// Show loading state
+function showLoading() {
+    loadingIndicator.classList.remove('hidden');
+    loadingIndicator.querySelector('.loading-text p').textContent = 'Searching Amazon products...';
+}
+
+// Hide loading state
 function hideLoading() {
     loadingIndicator.classList.add('hidden');
 }
 
+// Show error message
 function showError(message) {
     errorMessage.textContent = message;
     errorMessage.classList.remove('hidden');
 }
 
+// Hide error message
 function hideError() {
     errorMessage.classList.add('hidden');
 }
 
+// Show results section
 function showResults() {
     resultsSection.classList.remove('hidden');
 }
 
+// Hide results section
 function hideResults() {
     resultsSection.classList.add('hidden');
 }
 
+// Escape HTML to prevent XSS
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.toString().replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // Auto-focus search input on page load
