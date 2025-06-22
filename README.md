@@ -187,13 +187,13 @@ Create a `.env` file in the root directory with the following variables:
 ```env
 # RapidAPI Configuration
 RAPIDAPI_KEY=your_rapidapi_key_here
-RAPIDAPI_HOST=product-search-api.p.rapidapi.com
+RAPID_API_AMAZON=your_amazon_rapidapi_key_here
 
 # Firecrawl Configuration
-FIRECRAWL_API_KEY=***REMOVED***
+FIRECRAWL_API_KEY=your_firecrawl_api_key_here
 
 # Llama API Configuration
-LLAMA_API_KEY=***REMOVED***
+LLAMA_API_KEY=your_llama_api_key_here
 ```
 
 ### 4. Get API Keys

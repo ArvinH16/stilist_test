@@ -35,7 +35,7 @@ async function searchAmazonProducts(query, page = 1) {
             // brand: 'Nike'              // Brand filter (e.g., 'Nike', 'Adidas', etc.)
         },
         headers: {
-            'x-rapidapi-key': '***REMOVED***',
+            'x-rapidapi-key': process.env.RAPID_API_AMAZON || 'your_amazon_rapidapi_key_here',
             'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com'
         }
     };
