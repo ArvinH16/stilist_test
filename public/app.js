@@ -21,20 +21,26 @@ searchForm.addEventListener('submit', async (e) => {
     await performSearch(query);
 });
 
-// Perform search API call with automatic better image selection
-async function performSearch(query) {
+// Perform search API call with intelligent batch processing
+async function performSearch(query, targetQuality = 2, maxProducts = 6) {
     try {
-        // Show loading state with image selection message
+        // Show loading state with intelligent processing message
         showLoading(true);
         hideError();
         hideResults();
+        
+        const startTime = Date.now();
         
         const response = await fetch('/api/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ query })
+            body: JSON.stringify({ 
+                query,
+                targetQuality: parseInt(targetQuality),
+                maxProducts: parseInt(maxProducts)
+            })
         });
         
         if (!response.ok) {
@@ -42,13 +48,14 @@ async function performSearch(query) {
         }
         
         const data = await response.json();
+        const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
         
         // Hide loading state
         hideLoading();
         
         if (data.products && data.products.length > 0) {
             currentProducts = data.products;
-            displayResults(currentProducts, query, data.improvedCount);
+            displayResults(currentProducts, query, data, processingTime);
         } else {
             showError('No products found. Try a different search term.');
         }
@@ -59,20 +66,38 @@ async function performSearch(query) {
     }
 }
 
-// Functions removed - better image selection now happens automatically during search
-
-// Display search results with better image information
-function displayResults(products, query, improvedCount = 0) {
-    resultsTitle.textContent = `Search Results for "${query}"`;
+// Display search results with intelligent processing information
+function displayResults(products, query, searchData, processingTime) {
+    resultsTitle.textContent = `High-Quality Results for "${query}"`;
     
-    // Show improved image count information
-    const imageInfo = improvedCount > 0 ? ` (${improvedCount} better images found ✨)` : '';
-    resultsCount.textContent = `Found ${products.length} products${imageInfo}`;
+    // Enhanced result summary with quality filtering information
+    const qualityInfo = [];
+    qualityInfo.push(`${searchData.highQualityCount} high-quality products 🟢`);
+    
+    if (searchData.filteredOutCount > 0) {
+        qualityInfo.push(`${searchData.filteredOutCount} low-quality filtered out 🚫`);
+    }
+    
+    if (searchData.targetAchieved) {
+        qualityInfo.push(`quality target achieved 🎯`);
+    }
+    
+    const qualityText = ` (${qualityInfo.join(', ')})`;
+    const processingText = ` • Processed ${searchData.processedCount} products in ${processingTime}s`;
+    
+    resultsCount.innerHTML = `
+        <div class="results-summary">
+            <div class="results-main">Showing ${products.length} products${qualityText}</div>
+            <div class="results-meta">
+                Found ${searchData.processedCount}/${searchData.originalCount} products, showing only high-quality${processingText}
+            </div>
+        </div>
+    `;
     
     productsGrid.innerHTML = '';
     
-    products.forEach(product => {
-        const productCard = createProductCard(product);
+    products.forEach((product, index) => {
+        const productCard = createProductCard(product, index + 1);
         productsGrid.appendChild(productCard);
     });
     
@@ -85,12 +110,19 @@ function displayResults(products, query, improvedCount = 0) {
     });
 }
 
-// Better image selection functionality removed - now happens automatically during search
-
-// Create product card HTML
-function createProductCard(product) {
+// Create product card HTML with quality indicators
+function createProductCard(product, index) {
     const card = document.createElement('div');
-    card.className = 'product-card';
+    
+    // Dynamic card class based on quality
+    let cardClass = 'product-card';
+    if (product.qualityScore >= 50) {
+        cardClass += ' high-quality-card';
+    } else if (product.imageImproved) {
+        cardClass += ' improved-card';
+    }
+    
+    card.className = cardClass;
     
     // Generate star rating
     const starRating = generateStarRating(product.rating);
@@ -102,7 +134,21 @@ function createProductCard(product) {
     const imageUrl = product.betterImageUrl || product.imageUrl || '/placeholder-image.png';
     const imageClass = product.imageImproved ? 'product-image improved-image' : 'product-image';
     
+    // Quality indicator
+    let qualityBadge = '';
+    if (product.qualityScore >= 50) {
+        qualityBadge = `<div class="quality-badge high-quality">🟢 High Quality (${product.qualityScore})</div>`;
+    } else if (product.imageImproved) {
+        qualityBadge = `<div class="quality-badge improved">🟡 Improved (${product.qualityScore})</div>`;
+    } else if (product.qualityScore > 0) {
+        qualityBadge = `<div class="quality-badge basic">🔴 Basic (${product.qualityScore})</div>`;
+    }
+    
+    // Ranking indicator
+    const rankingBadge = `<div class="ranking-badge">#${index}</div>`;
+    
     card.innerHTML = `
+        ${rankingBadge}
         <img 
             src="${imageUrl}" 
             alt="${product.title}"
@@ -121,7 +167,11 @@ function createProductCard(product) {
                 </div>
             ` : ''}
             ${offersText ? `<div class="product-offers">${offersText}</div>` : ''}
-            ${product.imageImproved ? `<div class="improvement-badge">✨ Better Image</div>` : ''}
+            ${qualityBadge}
+            ${product.qualityReasons && product.qualityReasons.length > 0 ? 
+                `<div class="quality-reasons" title="${product.qualityReasons.join(', ')}">${product.qualityReasons.slice(0, 2).join(', ')}${product.qualityReasons.length > 2 ? '...' : ''}</div>` 
+                : ''
+            }
         </div>
     `;
     
@@ -163,16 +213,15 @@ function generateStarRating(rating) {
     return stars + ` ${rating}`;
 }
 
-// Better image selection UI functions removed - now integrated into search
-
 // Utility functions
-function showLoading(withImageSelection = false) {
-    if (withImageSelection) {
+function showLoading(withIntelligentProcessing = false) {
+    if (withIntelligentProcessing) {
         loadingIndicator.innerHTML = `
             <div class="spinner"></div>
             <div class="loading-text">
-                <p>Searching for products...</p>
-                <p class="loading-subtext">Finding better images ✨</p>
+                <p>🤖 Intelligent Search in Progress...</p>
+                <p class="loading-subtext">Finding high-quality product images ✨</p>
+                <p class="loading-detail">Only showing products with professional-grade images</p>
             </div>
         `;
     } else {
