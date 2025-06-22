@@ -29,6 +29,10 @@ async function searchAmazonProducts(query, page = 1) {
             product_condition: 'ALL',
             is_prime: 'false',
             deals_and_discounts: 'NONE'
+            // Additional available parameters (commented out for now):
+            // min_price: '20',           // Minimum price filter
+            // max_price: '120',          // Maximum price filter
+            // brand: 'Nike'              // Brand filter (e.g., 'Nike', 'Adidas', etc.)
         },
         headers: {
             'x-rapidapi-key': '***REMOVED***',
