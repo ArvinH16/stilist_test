@@ -1,6 +1,6 @@
-# Product Search Application
+# Product Search App with Intelligent Image Processing
 
-A modern, responsive product search application that allows users to search for products using the RapidAPI product search service. Now enhanced with AI-powered image quality enhancement using Firecrawl and Llama API.
+A smart product search application that uses intelligent batch processing to find high-quality product images efficiently.
 
 ## Features
 
@@ -11,15 +11,159 @@ A modern, responsive product search application that allows users to search for 
 - 🆕 **Image Enhancement**: AI-powered image quality enhancement using Firecrawl and Llama API
 - ⚡ **Real-time Results**: Fast and reliable product search results
 
-## New Image Enhancement Feature
+## 🚀 New Features: Intelligent Batch Processing
 
-This application now includes an advanced image enhancement feature that:
+### What's New?
+- **Smart Quality Assessment**: Each product image gets a quality score (0-75) based on multiple factors
+- **Adaptive Batch Processing**: Dynamically adjusts processing strategy based on success rates
+- **Target-Based Processing**: Stops when quality targets are achieved or continues intelligently
+- **Enhanced UI**: Visual quality indicators, ranking badges, and detailed processing feedback
 
-1. Takes product links from search results
-2. Uses Firecrawl to scrape the product page for high-quality images
-3. Uses Llama AI to intelligently select the best product image
-4. Replaces low-quality images with enhanced versions
-5. Provides visual indicators for enhanced images
+### How It Works
+
+#### 1. Quality Scoring System
+Products are scored based on:
+- **Better Image Found** (+30 points): Successfully found improved image
+- **High Resolution Indicators** (+20 points): URLs containing '1200', '800', 'large', 'xl'  
+- **Professional Hosting** (+15 points): CDN, assets, or media hosting
+- **Good Image Format** (+10 points): .jpg, .jpeg, .png formats
+- **Good Original Image** (+15 points): Not encrypted Google thumbnail
+
+#### 2. Intelligent Batch Processing
+- **Starts with 2 products** for initial assessment
+- **Adapts batch size** based on success rates:
+  - Good success (≥50%): Continue with batch size 2
+  - Poor success (<25%): Increase to batch size 3 for faster discovery
+  - Moderate success: Maintain current approach
+- **Target Achievement**: Stops when target number of high-quality images found
+- **Max Limit Protection**: Won't process more than specified maximum products
+
+#### 3. Visual Quality Indicators
+- **🟢 High Quality (50+ score)**: Green border, professional image found
+- **🟡 Improved (any score)**: Orange border, image was enhanced
+- **🔴 Basic**: Red indicator, original image used
+- **Ranking badges**: Shows processing order (#1, #2, etc.)
+- **Quality reasons**: Hover to see why an image got its score
+
+### API Parameters
+
+```javascript
+POST /api/search
+{
+  "query": "dresses",           // Search term
+  "targetQuality": 2,           // Number of high-quality images needed
+  "maxProducts": 6,             // Maximum products to process
+  "page": "1",                  // Results page
+  "country": "us"               // Country code
+}
+```
+
+### Response Format
+
+```javascript
+{
+  "products": [...],                    // Processed products with quality scores
+  "originalCount": 20,                  // Total products from search API
+  "processedCount": 4,                  // Products actually processed
+  "highQualityCount": 2,               // Products with quality score ≥50
+  "improvedCount": 3,                  // Products with improved images
+  "targetAchieved": true,              // Whether quality target was met
+  "searchParams": {
+    "targetQuality": 2,
+    "maxProducts": 6
+  }
+}
+```
+
+### Product Quality Scores
+
+Each product includes:
+```javascript
+{
+  "title": "Product Name",
+  "betterImageUrl": "https://...",      // Best image found
+  "imageImproved": true,                // Whether image was enhanced
+  "qualityScore": 65,                   // Quality score (0-75)
+  "qualityReasons": [                   // Why it got this score
+    "Better image found",
+    "High resolution indicators",
+    "Professional hosting"
+  ]
+}
+```
+
+## 🎯 Benefits
+
+### Speed
+- **Stops Early**: Achieves targets without unnecessary processing
+- **Adaptive Strategy**: Increases batch size when needed for faster discovery
+- **Parallel Processing**: Processes multiple products simultaneously
+
+### Quality
+- **Objective Scoring**: Consistent quality assessment criteria
+- **Professional Images**: Prioritizes CDN-hosted, high-resolution images
+- **Fallback Protection**: Always provides an image, even if not improved
+
+### User Experience
+- **Clear Feedback**: Shows exactly what was processed and achieved
+- **Visual Quality Cues**: Immediate visual indication of image quality
+- **Processing Transparency**: Shows timing and efficiency metrics
+
+## 🚀 Getting Started
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Set up environment variables:
+   ```bash
+   RAPIDAPI_KEY=your_key
+   RAPIDAPI_HOST=product-search-api.p.rapidapi.com
+   FIRECRAWL_API_KEY=your_key
+   LLAMA_API_KEY=your_key
+   ```
+
+3. Start the server:
+   ```bash
+   npm start
+   ```
+
+4. Visit `http://localhost:3000`
+
+## 📊 Example Processing Flow
+
+```
+🎯 Target: 2 high-quality images from up to 6 products
+
+📦 Processing batch 1: 2 products (indices 0-1)
+🔍 Processing product 1: Blue Summer Dress
+📊 Product 1 Quality Score: 65/75
+📝 Reasons: Better image found, High resolution indicators, Professional hosting
+
+🔍 Processing product 2: Red Evening Gown  
+📊 Product 2 Quality Score: 35/75
+📝 Reasons: Better image found, Good image format
+
+📈 Batch 1 Results:
+   • High Quality (50+ score): 1/2
+   • Images Improved: 2/2
+
+🎯 Progress: 1/2 high-quality images found
+
+📦 Processing batch 2: 2 products (indices 2-3)
+🔍 Processing product 3: Black Cocktail Dress
+📊 Product 3 Quality Score: 55/75
+
+✅ Target achieved! Found 2 high-quality images
+
+🏆 Final Results Summary:
+   🟢 #1: Blue Summer Dress (Score: 65)
+   🟢 #2: Black Cocktail Dress (Score: 55) 
+   🟡 #3: Red Evening Gown (Score: 35)
+```
+
+This intelligent system ensures you get the best possible product images while maintaining optimal performance!
 
 ## Setup Instructions
 
